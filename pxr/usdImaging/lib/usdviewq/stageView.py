@@ -804,7 +804,8 @@ class StageView(QtOpenGL.QGLWidget):
     def rendererAovName(self):
         return self._rendererAovName
 
-    def __init__(self, parent=None, dataModel=None, printTiming=False):
+    def __init__(self, parent=None, dataModel=None, printTiming=False,
+                 delegateID=None):
 
         glFormat = QtOpenGL.QGLFormat()
         msaa = os.getenv("USDVIEW_ENABLE_MSAA", "1")
@@ -817,6 +818,7 @@ class StageView(QtOpenGL.QGLWidget):
 
         self._dataModel = dataModel or StageView.DefaultDataModel()
         self._printTiming = printTiming
+        self._delegateID = delegateID
 
         self._isFirstImage = True
 
@@ -908,7 +910,11 @@ class StageView(QtOpenGL.QGLWidget):
         # create the renderer lazily, when we try to do real work with it.
         if not self._renderer:
             if self.isValid():
-                self._renderer = UsdImagingGL.Engine()
+                if self._delegateID:
+                    self._renderer = \
+                        UsdImagingGL.Engine('/', delegateID=self._delegateID)
+                else:
+                    self._renderer = UsdImagingGL.Engine()
                 self._handleRendererChanged(self.GetCurrentRendererId())
             elif not self._reportedContextError:
                 self._reportedContextError = True
@@ -2096,38 +2102,40 @@ class StageView(QtOpenGL.QGLWidget):
             (inImageBounds, pickFrustum) = self.computePickFrustum(x,y)
 
             if inImageBounds:
-                selectedPoint, selectedPrimPath, selectedInstancerPath, \
+                selectedPoint, selectedIndexPath, selectedInstancerPath, \
                 selectedInstanceIndex, selectedElementIndex = self.pick(
                                                                 pickFrustum)
             else:
                 # If we're picking outside the image viewport (maybe because
                 # camera guides are on), treat that as a de-select.
-                selectedPoint, selectedPrimPath, selectedInstancerPath, \
+                selectedPoint, selectedIndexPath, selectedInstancerPath, \
                 selectedInstanceIndex, selectedElementIndex = \
                     None, Sdf.Path.emptyPath, None, None, None
 
             # The call to TestIntersection will return the path to a master prim
-            # (selectedPrimPath) and its instancer (selectedInstancerPath) if 
+            # (selectedIndexPath) and its instancer (selectedInstancerPath) if 
             # the prim is instanced.
             # Figure out which instance was actually picked and use that as our 
             # selection in this case.
             if selectedInstancerPath:
-                instancePrimPath, absInstanceIndex = \
+                instanceIndexPath, instancerIndex = \
                     renderer.GetPrimPathFromInstanceIndex(
-                        selectedPrimPath, selectedInstanceIndex)
-                if instancePrimPath:
-                    selectedPrimPath = instancePrimPath
-                    selectedInstanceIndex = absInstanceIndex
+                        selectedIndexPath, selectedInstanceIndex)
+                if instanceIndexPath:
+                    selectedIndexPath = instanceIndexPath
+                    selectedInstanceIndex = instancerIndex
             else:
                 selectedInstanceIndex = ALL_INSTANCES
+                
+            selectedUsdPath = renderer.ConvertIndexPathToCachePath(selectedIndexPath)
 
             if button:
                 self.signalPrimSelected.emit(
-                    selectedPrimPath, selectedInstanceIndex, selectedPoint,
+                    selectedUsdPath, selectedInstanceIndex, selectedPoint,
                     button, modifiers)
             else:
                 self.signalPrimRollover.emit(
-                    selectedPrimPath, selectedInstanceIndex, selectedPoint,
+                    selectedUsdPath, selectedInstanceIndex, selectedPoint,
                     modifiers)
         except Tf.ErrorException as e:
             # If we encounter an error, we want to continue running. Just log 

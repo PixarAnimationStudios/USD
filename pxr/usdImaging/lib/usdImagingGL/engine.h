@@ -297,6 +297,18 @@ public:
         SdfPath * rprimPath=NULL,
         SdfPathVector *instanceContext=NULL);
 
+    // Converts a cache path to a path in the render index.
+    USDIMAGINGGL_API
+    SdfPath ConvertCachePathToIndexPath(SdfPath const& cachePath);
+
+    /// Convert the given Hydra ID to a UsdImaging cache path,
+    /// by stripping the scene delegate prefix.
+    ///
+    /// The UsdImaging cache path is the same as a USD prim path,
+    /// except for instanced prims, which get a name-mangled encoding.
+    USDIMAGINGGL_API
+    SdfPath ConvertIndexPathToCachePath(SdfPath const& indexPath);
+
     /// Resolves a 4-byte pixel from an id render to an int32 prim ID.
     static inline int DecodeIDRenderColor(unsigned char const idColor[4]) {
         return HdxPickTask::DecodeIDRenderColor(idColor);

@@ -1554,7 +1554,8 @@ class AppController(QtCore.QObject):
             else:
                 self._stageView = StageView(parent=self._mainWindow,
                     dataModel=self._dataModel,
-                    printTiming=self._printTiming)
+                    printTiming=self._printTiming,
+                    delegateID=self._parserData.delegateID)
 
                 self._stageView.fpsHUDInfo = self._fpsHUDInfo
                 self._stageView.fpsHUDKeys = self._fpsHUDKeys

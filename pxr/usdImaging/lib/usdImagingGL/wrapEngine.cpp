@@ -105,7 +105,11 @@ void wrapEngine()
                 "Engine", "UsdImaging Renderer class")
             .def( init<>() )
             .def( init<const SdfPath &, const SdfPathVector&,
-                    const SdfPathVector& >() )
+                    const SdfPathVector&, const SdfPath & >
+                ((args("rootPath"),
+                  args("excludedPaths") = SdfPathVector(),
+                  args("invisedPaths") = SdfPathVector(),
+                  args("delegateID") = SdfPath::AbsoluteRootPath())))
             .def("Render", &UsdImagingGLEngine::Render)
             .def("SetCameraState", &UsdImagingGLEngine::SetCameraState)
             .def("SetLightingStateFromOpenGL",
@@ -120,6 +124,10 @@ void wrapEngine()
             .def("GetRprimPathFromPrimId", 
                     &UsdImagingGLEngine::GetRprimPathFromPrimId)
             .def("GetPrimPathFromInstanceIndex", &_GetPrimPathFromInstanceIndex)
+            .def("ConvertCachePathToIndexPath",
+                    &UsdImagingGLEngine::ConvertCachePathToIndexPath)
+            .def("ConvertIndexPathToCachePath",
+                    &UsdImagingGLEngine::ConvertIndexPathToCachePath)
             .def("TestIntersection", &_TestIntersection)
             .def("IsHydraEnabled", &UsdImagingGLEngine::IsHydraEnabled)
                 .staticmethod("IsHydraEnabled")

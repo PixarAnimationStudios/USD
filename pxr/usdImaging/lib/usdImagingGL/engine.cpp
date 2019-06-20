@@ -674,6 +674,24 @@ UsdImagingGLEngine::GetPrimPathFromInstanceIndex(
                                              instanceContext);
 }
 
+SdfPath
+UsdImagingGLEngine::ConvertCachePathToIndexPath(SdfPath const& cachePath)
+{
+    if (ARCH_LIKELY(_delegate)) {
+        return _delegate->ConvertCachePathToIndexPath(cachePath);
+    }
+    return cachePath;
+}
+
+SdfPath
+UsdImagingGLEngine::ConvertIndexPathToCachePath(SdfPath const& indexPath)
+{
+    if (ARCH_LIKELY(_delegate)) {
+        return _delegate->ConvertIndexPathToCachePath(indexPath);
+    }
+    return indexPath;
+}
+
 //----------------------------------------------------------------------------
 // Renderer Plugin Management
 //----------------------------------------------------------------------------

@@ -61,7 +61,7 @@ class Launcher(object):
 
         with Timer() as totalTimer:
             self.RegisterPositionals(parser)
-            self.RegisterOptions(parser)
+            self.RegisterOptions(parser, debug='--debug' in sys.argv[1:])
             arg_parse_result = self.ParseOptions(parser)
             self.ValidateOptions(arg_parse_result)
             self.__LaunchProcess(arg_parse_result)
@@ -81,7 +81,7 @@ class Launcher(object):
                             type=str,
                             help='The file to view')
 
-    def RegisterOptions(self, parser):
+    def RegisterOptions(self, parser, debug=False):
         '''
         register optional arguments on the ArgParser
         '''
@@ -181,6 +181,17 @@ class Launcher(object):
                             "will include the opinions in the persistent "
                             "session layer.")
 
+        parser.add_argument('--debug', action='store_true',
+                            help='Display additional help information about '
+                            'debugging options')
+        
+        parser.add_argument('--delegateID',
+                    help='Specify a prefix to be added before all ' 
+                    'hydra renderIndex paths; useful when debugging, '
+                    'or investigating the inner workings of hydra, but '
+                    'may have a performance impact for very large scenes' 
+                    if debug else argparse.SUPPRESS)
+
     def ParseOptions(self, parser):
         '''
         runs the parser on the arguments
@@ -230,7 +241,23 @@ class Launcher(object):
         if arg_parse_result.clearSettings and arg_parse_result.defaultSettings:
             raise InvalidUsdviewOption(
                 "cannot supply both --clearsettings and --defaultsettings.")
-
+            
+        if arg_parse_result.delegateID:
+            from pxr import Sdf
+            isValid = Sdf.Path.IsValidPathString(arg_parse_result.delegateID)
+            if isinstance(isValid, tuple) and not isValid[0]:
+                raise InvalidUsdviewOption(
+                    "given delegateID was not a valid sdf path - %r: %s"
+                    % (arg_parse_result.delegateID, isValid[1]))
+            arg_parse_result.delegateID = Sdf.Path(arg_parse_result.delegateID)
+            arg_parse_result.delegateID = \
+                arg_parse_result.delegateID.MakeAbsolutePath(
+                    Sdf.Path.absoluteRootPath)
+            if not arg_parse_result.delegateID.IsAbsoluteRootOrPrimPath():
+                raise InvalidUsdviewOption(
+                    "given delegateID was not a prim path - %r"
+                    % arg_parse_result.delegateID)
+ 
     def GetResolverContext(self, usdFile):
         """
         Create and return the ArResolverContext that will be used to Open
