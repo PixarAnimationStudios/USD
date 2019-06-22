@@ -1092,6 +1092,16 @@ class AppController(QtCore.QObject):
 
     def _openStage(self, usdFilePath, sessionFilePath, populationMaskPaths):
 
+        # We are iterating through the plugin registry to add anything
+        # containing shaders to the default search path.
+        resourcePaths = set()
+        from pxr import Plug
+        pr = Plug.Registry()
+        for t in pr.GetAllPlugins():
+            if t.metadata.get('ShaderResources') is not None:
+                resourcePaths.add(t.resourcePath)
+        Ar.DefaultResolver.SetDefaultSearchPath(sorted(list(resourcePaths)))
+
         def _GetFormattedError(reasons=[]):
             err = ("Error: Unable to open stage '{0}'\n".format(usdFilePath))
             if reasons:
