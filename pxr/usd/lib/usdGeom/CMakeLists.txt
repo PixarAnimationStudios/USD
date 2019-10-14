@@ -41,6 +41,7 @@ pxr_library(usdGeom
         motionAPI
         nurbsCurves
         nurbsPatch
+        plane
         pointBased
         pointInstancer
         points
@@ -83,6 +84,7 @@ pxr_library(usdGeom
         wrapMotionAPI.cpp
         wrapNurbsCurves.cpp
         wrapNurbsPatch.cpp
+        wrapPlane.cpp
         wrapPointBased.cpp
         wrapPointInstancer.cpp
         wrapPoints.cpp

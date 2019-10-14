@@ -54,6 +54,7 @@ TF_WRAP_MODULE
                     TF_WRAP(UsdGeomCube);
                     TF_WRAP(UsdGeomCylinder);
                     TF_WRAP(UsdGeomSphere);
+                    TF_WRAP(UsdGeomPlane);
                     TF_WRAP(UsdGeomPointBased);
                         TF_WRAP(UsdGeomMesh);
                         TF_WRAP(UsdGeomNurbsPatch);

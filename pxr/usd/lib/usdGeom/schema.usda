@@ -707,6 +707,48 @@ class Cone "Cone" (
     )
 }
 
+class Plane "Plane" (
+    inherits = </Gprim>
+    doc = """Defines a flat primitive plane, centered at the origin, 
+    whose edges are perpendicular to the axis."""
+    customData = {
+        dictionary extraPlugInfo = {
+            bool implementsComputeExtent = true
+        }
+    }
+) {
+    uniform bool doubleSided = true (
+            doc = """Planes are doubleSided by default."""
+        )
+    double width = 2.0 (
+        doc = """The width of the plane along one side of parallel edges, and
+        perpendicular to the \\em axis and length edges.  If you author \\em width 
+        you must also author \\em extent.
+        
+        \\sa GetExtentAttr()"""
+    )
+    double length = 2.0 (
+        doc = """The length of the plane along one side of parallel edges, and
+        perpendicular to the \\em axis and width edges.  If you author \\em length 
+        you must also author \\em extent.
+        
+        \\sa GetExtentAttr()"""
+    )
+    uniform token axis = "Z" (
+        allowedTokens = ["X", "Y", "Z"]
+        doc = """The axis along which the surface of the plane is aligned.
+        \\sa UsdGeomGprim::GetAxisAttr()."""
+    )
+    float3[] extent = [(-1.0, -1.0, 0.0), (1.0, 1.0, 0.0)] (
+        doc = """Extent is re-defined on Plane only to provide a fallback
+        value. \\sa UsdGeomGprim::GetExtentAttr()."""
+    )
+    texCoord2d[] primvars:st = [(1.0,1.0),(0.0,1.0),(0.0,0.0),(1.0,0.0)] (
+        doc = """The default st coordinates for texture maps."""
+        interpolation = "varying"
+    )
+}
+
 class "PointBased" (
     doc = """Base class for all UsdGeomGprims that possess points,
     providing common attributes such as normals and velocities."""

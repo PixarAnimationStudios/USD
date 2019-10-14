@@ -128,6 +128,7 @@ void wrapUsdGeomTokens()
     _AddToken(cls, "knots", UsdGeomTokens->knots);
     _AddToken(cls, "left", UsdGeomTokens->left);
     _AddToken(cls, "leftHanded", UsdGeomTokens->leftHanded);
+    _AddToken(cls, "length", UsdGeomTokens->length);
     _AddToken(cls, "linear", UsdGeomTokens->linear);
     _AddToken(cls, "loop", UsdGeomTokens->loop);
     _AddToken(cls, "metersPerUnit", UsdGeomTokens->metersPerUnit);
@@ -163,6 +164,7 @@ void wrapUsdGeomTokens()
     _AddToken(cls, "power", UsdGeomTokens->power);
     _AddToken(cls, "primvarsDisplayColor", UsdGeomTokens->primvarsDisplayColor);
     _AddToken(cls, "primvarsDisplayOpacity", UsdGeomTokens->primvarsDisplayOpacity);
+    _AddToken(cls, "primvarsSt", UsdGeomTokens->primvarsSt);
     _AddToken(cls, "projection", UsdGeomTokens->projection);
     _AddToken(cls, "protoIndices", UsdGeomTokens->protoIndices);
     _AddToken(cls, "prototypes", UsdGeomTokens->prototypes);
@@ -209,6 +211,7 @@ void wrapUsdGeomTokens()
     _AddToken(cls, "vOrder", UsdGeomTokens->vOrder);
     _AddToken(cls, "vRange", UsdGeomTokens->vRange);
     _AddToken(cls, "vVertexCount", UsdGeomTokens->vVertexCount);
+    _AddToken(cls, "width", UsdGeomTokens->width);
     _AddToken(cls, "widths", UsdGeomTokens->widths);
     _AddToken(cls, "wrap", UsdGeomTokens->wrap);
     _AddToken(cls, "x", UsdGeomTokens->x);

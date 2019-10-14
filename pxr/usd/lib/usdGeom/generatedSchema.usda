@@ -1558,6 +1558,144 @@ class Cone "Cone" (
     )
 }
 
+class Plane "Plane" (
+    doc = """Defines a flat primitive plane, centered at the origin, 
+    whose edges are perpendicular to the axis."""
+)
+{
+    uniform token axis = "Z" (
+        allowedTokens = ["X", "Y", "Z"]
+        doc = """The axis along which the surface of the plane is aligned.
+        \\sa UsdGeomGprim::GetAxisAttr()."""
+    )
+    uniform bool doubleSided = 1 (
+        doc = "Planes are doubleSided by default."
+    )
+    float3[] extent = [(-1, -1, 0), (1, 1, 0)] (
+        doc = """Extent is re-defined on Plane only to provide a fallback
+        value. \\sa UsdGeomGprim::GetExtentAttr()."""
+    )
+    double length = 2 (
+        doc = """The length of the plane along one side of parallel edges, and
+        perpendicular to the axis and width edges.  If you author length 
+        you must also author extent.
+        
+        \\sa GetExtentAttr()"""
+    )
+    uniform token orientation = "rightHanded" (
+        allowedTokens = ["rightHanded", "leftHanded"]
+        doc = """Orientation specifies whether the gprim's surface normal 
+        should be computed using the right hand rule, or the left hand rule.
+        Please see for a deeper explanation and
+        generalization of orientation to composed scenes with transformation
+        hierarchies."""
+    )
+    color3f[] primvars:displayColor (
+        doc = '''It is useful to have an "official" colorSet that can be used
+        as a display or modeling color, even in the absence of any specified
+        shader for a gprim.  DisplayColor serves this role; because it is a
+        UsdGeomPrimvar, it can also be used as a gprim override for any shader
+        that consumes a displayColor parameter.'''
+    )
+    float[] primvars:displayOpacity (
+        doc = """Companion to displayColor that specifies opacity, broken
+        out as an independent attribute rather than an rgba color, both so that
+        each can be independently overridden, and because shaders rarely consume
+        rgba parameters."""
+    )
+    texCoord2d[] primvars:st = [(1, 1), (0, 1), (0, 0), (1, 0)] (
+        doc = "The default st coordinates for texture maps."
+        interpolation = "varying"
+    )
+    rel proxyPrim (
+        doc = '''The proxyPrim relationship allows us to link a
+        prim whose purpose is "render" to its (single target)
+        purpose="proxy" prim.  This is entirely optional, but can be
+        useful in several scenarios:
+        
+        - In a pipeline that does pruning (for complexity management)
+        by deactivating prims composed from asset references, when we
+        deactivate a purpose="render" prim, we will be able to discover
+        and additionally deactivate its associated purpose="proxy" prim,
+        so that preview renders reflect the pruning accurately.
+        
+        - DCC importers may be able to make more aggressive optimizations
+        for interactive processing and display if they can discover the proxy
+        for a given render prim.
+        
+        - With a little more work, a Hydra-based application will be able
+        to map a picked proxy prim back to its render geometry for selection.
+
+        \\note It is only valid to author the proxyPrim relationship on
+        prims whose purpose is "render".'''
+    )
+    uniform token purpose = "default" (
+        allowedTokens = ["default", "render", "proxy", "guide"]
+        doc = '''Purpose is a concept we have found useful in our pipeline for 
+        classifying geometry into categories that can each be independently
+        included or excluded from traversals of prims on a stage, such as
+        rendering or bounding-box computation traversals.  The fallback
+        purpose, default indicates that a prim has "no special purpose"
+        and should generally be included in all traversals.  Subtrees rooted
+        at a prim with purpose render should generally only be included
+        when performing a "final quality" render.  Subtrees rooted at a prim
+        with purpose proxy should generally only be included when 
+        performing a lightweight proxy render (such as openGL).  Finally,
+        subtrees rooted at a prim with purpose guide should generally
+        only be included when an interactive application has been explicitly
+        asked to "show guides". 
+        
+        In the previous paragraph, when we say "subtrees rooted at a prim",
+        we mean the most ancestral or tallest subtree that has an authored,
+        non-default opinion.  If the purpose of </RootPrim> is set to 
+        "render", then the effective purpose of </RootPrim/ChildPrim> will
+        be "render" even if that prim has a different authored value for
+        purpose.  <b>See ComputePurpose() for details of how purpose 
+        inherits down namespace</b>.
+        
+        As demonstrated in UsdGeomBBoxCache, a traverser should be ready to 
+        accept combinations of included purposes as an input.
+        
+        Purpose render can be useful in creating "light blocker"
+        geometry for raytracing interior scenes.  Purposes render and
+        proxy can be used together to partition a complicated model
+        into a lightweight proxy representation for interactive use, and a
+        fully realized, potentially quite heavy, representation for rendering.
+        One can use UsdVariantSets to create proxy representations, but doing
+        so requires that we recompose parts of the UsdStage in order to change
+        to a different runtime level of detail, and that does not interact
+        well with the needs of multithreaded rendering. Purpose provides us with
+        a better tool for dynamic, interactive complexity management.'''
+    )
+    token visibility = "inherited" (
+        allowedTokens = ["inherited", "invisible"]
+        doc = '''Visibility is meant to be the simplest form of "pruning" 
+        visibility that is supported by most DCC apps.  Visibility is 
+        animatable, allowing a sub-tree of geometry to be present for some 
+        segment of a shot, and absent from others; unlike the action of 
+        deactivating geometry prims, invisible geometry is still 
+        available for inspection, for positioning, for defining volumes, etc.'''
+    )
+    double width = 2 (
+        doc = """The width of the plane along one side of parallel edges, and
+        perpendicular to the axis and length edges.  If you author width 
+        you must also author extent.
+        
+        \\sa GetExtentAttr()"""
+    )
+    uniform token[] xformOpOrder (
+        doc = """Encodes the sequence of transformation operations in the
+        order in which they should be pushed onto a transform stack while
+        visiting a UsdStage's prims in a graph traversal that will effect
+        the desired positioning for this prim and its descendant prims.
+        
+        You should rarely, if ever, need to manipulate this attribute directly.
+        It is managed by the AddXformOp(), SetResetXformStack(), and
+        SetXformOpOrder(), and consulted by GetOrderedXformOps() and
+        GetLocalTransformation()."""
+    )
+}
+
 class "PointBased" (
     doc = """Base class for all UsdGeomGprims that possess points,
     providing common attributes such as normals and velocities."""
