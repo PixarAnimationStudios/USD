@@ -72,8 +72,20 @@ public:
     GLF_API
     static const GlfContextCaps &GetInstance();
 
+    /// Core-Profile contexts must bind a VAO (Vertex Array Object) because
+    /// they do not have a default vertex array object. VAO objects are
+    /// container objects which are not shared between contexts, so this object
+    /// will create and bind a VAO here so that core rendering code does not have to
+    /// explicitly manage per-GL context state.
+    class CoreVAO {
+        unsigned vao;
+    public:
+        CoreVAO();
+        ~CoreVAO();
+    };
 
-
+    
+    
     // GL version
     int glVersion;                    // 400 (4.0), 410 (4.1), ...
 

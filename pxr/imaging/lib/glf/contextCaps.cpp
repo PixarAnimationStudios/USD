@@ -350,6 +350,25 @@ GlfContextCaps::_LoadCaps()
     }
 }
 
+GlfContextCaps::CoreVAO::CoreVAO()
+    : vao(GL_NONE)
+{
+    if (GlfContextCaps::GetInstance().coreProfile) {
+        glGenVertexArrays(1, &vao);
+        glBindVertexArray(vao);
+    }
+}
+
+GlfContextCaps::CoreVAO::~CoreVAO()
+{
+    if (vao != GL_NONE) {
+        glBindVertexArray(0);
+        // XXX: We should not delete the VAO on every draw call, but we
+        // currently must because it is GL Context state and we do not control
+        // the context.
+        glDeleteVertexArrays(1, &vao);
+    }
+}
 
 PXR_NAMESPACE_CLOSE_SCOPE
 

@@ -43,12 +43,12 @@
 
 -- glsl Fullscreen.Vertex
 
-#version 120
+#version 150
 
-attribute vec4 position;
-attribute vec2 uvIn;
+in vec4 position;
+in vec2 uvIn;
 
-varying vec2 uv;
+out vec2 uv;
 
 void main(void)
 {
@@ -58,22 +58,24 @@ void main(void)
 
 -- glsl Composite.FragmentNoDepth
 
-#version 120
+#version 150
 
-varying vec2 uv;
+in vec2 uv;
+out vec4 fragColor;
 
 uniform sampler2D colorIn;
 
 void main(void)
 {
-    gl_FragColor = texture2D(colorIn, uv);
+    fragColor = texture(colorIn, uv);
 }
 
 -- glsl Composite.FragmentWithDepth
 
-#version 120
+#version 150
 
-varying vec2 uv;
+in vec2 uv;
+out vec4 fragColor;
 
 uniform sampler2D colorIn;
 uniform sampler2D depthIn;
@@ -86,7 +88,7 @@ RemapDepth(float depth) {
 
 void main(void)
 {
-    float depth = texture2D(depthIn, uv).r;
-    gl_FragColor = texture2D(colorIn, uv);
+    float depth = texture(depthIn, uv).r;
+    fragColor = texture(colorIn, uv);
     gl_FragDepth = remapDepthIn ? RemapDepth(depth) : depth;
 }

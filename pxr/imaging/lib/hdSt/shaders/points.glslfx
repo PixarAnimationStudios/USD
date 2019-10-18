@@ -88,7 +88,7 @@ void main(void)
     color.rgb = HdGet_displayColor().rgb;
 #endif
 #ifdef HD_HAS_displayOpacity
-    color.a = HdGet_displayOpacity().r;
+    color.a = HdGet_displayOpacity();
 #endif
 
     vec4 patchCoord = vec4(0);

@@ -22,6 +22,7 @@
 // language governing permissions and limitations under the Apache License.
 //
 #include "pxr/imaging/glf/glew.h"
+#include "pxr/imaging/glf/contextCaps.h"
 
 #include "pxr/imaging/hdx/compositor.h"
 #include "pxr/imaging/hdx/package.h"
@@ -254,6 +255,8 @@ HdxCompositor::Draw(GLuint colorId, GLuint depthId, bool remapDepth)
     }
 
     glUniform1i(_locations[remapDepthIn], (GLint)remapDepth);
+
+    GlfContextCaps::CoreVAO vao;
 
     glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
     glVertexAttribPointer(_locations[position], 4, GL_FLOAT, GL_FALSE,

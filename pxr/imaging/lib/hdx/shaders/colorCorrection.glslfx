@@ -40,12 +40,12 @@
 
 -- glsl ColorCorrection.Vertex
 
-#version 120
+#version 150
 
-attribute vec4 position;
-attribute vec2 uvIn;
+in vec4 position;
+in vec2 uvIn;
 
-varying vec2 uv;
+out vec2 uv;
 
 void main(void)
 {
@@ -55,7 +55,8 @@ void main(void)
 
 -- glsl ColorCorrection.Fragment
 
-varying vec2 uv;
+in vec2 uv;
+out vec4 fragColor;
 
 uniform sampler2D colorIn;
 uniform sampler3D LUT3dIn;
@@ -77,7 +78,7 @@ vec3 FloatToSRGB(vec3 val)
 
 void main(void)
 {
-    vec4 color = texture2D(colorIn, uv);
+    vec4 color = texture(colorIn, uv);
 
     #if defined(GLSLFX_USE_OCIO)
         color = OCIODisplay(color, LUT3dIn);
@@ -86,5 +87,5 @@ void main(void)
         color.rgb = FloatToSRGB(color.rgb);
     #endif
 
-    gl_FragColor = color;
+    fragColor = color;
 }

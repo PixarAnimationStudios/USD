@@ -32,6 +32,7 @@
 #include "pxr/imaging/hdSt/glslProgram.h"
 #include "pxr/imaging/hdSt/renderBuffer.h"
 #include "pxr/imaging/hf/perfLog.h"
+#include "pxr/imaging/glf/contextCaps.h"
 #include "pxr/imaging/glf/diagnostic.h"
 #include "pxr/imaging/hio/glslfx.h"
 #include "pxr/imaging/glf/glContext.h"
@@ -206,7 +207,7 @@ HdxColorCorrectionTask::_CreateShaderResources()
 
     HioGlslfx glslfx(HdxPackageColorCorrectionShader());
 
-    std::string fragCode = "#version 120\n";
+    std::string fragCode = "#version 150\n";
 
     if (useOCIO) {
         fragCode += "#define GLSLFX_USE_OCIO\n";
@@ -449,6 +450,8 @@ HdxColorCorrectionTask::_ApplyColorCorrection()
         glBindTexture(GL_TEXTURE_3D, _texture3dLUT);
         glUniform1i(_locations[LUT3D_IN], 1);
     }
+
+    GlfContextCaps::CoreVAO vao;
 
     glBindBuffer(GL_ARRAY_BUFFER, _vertexBuffer);
     glVertexAttribPointer(_locations[POSITION], 4, GL_FLOAT, GL_FALSE,

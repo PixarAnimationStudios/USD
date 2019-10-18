@@ -46,6 +46,8 @@ from selectionDataModel import ALL_INSTANCES, SelectionDataModel
 from viewSettingsDataModel import ViewSettingsDataModel
 from freeCamera import FreeCamera
 
+kGLMajorVersion, kGLShaderVersion, kGLGenVertex = (0,0,0)
+
 # A viewport rectangle to be used for GL must be integer values.
 # In order to loose the least amount of precision the viewport
 # is centered and adjusted to initially contain entirely the
@@ -80,41 +82,47 @@ def ViewportMakeCenteredIntegral(viewport):
         width -= 2
     return (left, bottom, width, height)
 
+class GLSLShader():
+    def __init__(self, type):
+        from OpenGL import GL
+        self.shader = GL.glCreateShader(type)
+    
+    def attach(self, source, program):
+        from OpenGL import GL
+        GL.glShaderSource(self.shader, source)
+        GL.glCompileShader(self.shader)
+        GL.glAttachShader(program, self.shader)
+
+    def __del__(self):
+        from OpenGL import GL
+        GL.glDeleteShader(self.shader)
+
 class GLSLProgram():
     def __init__(self, VS3, FS3, VS2, FS2, uniformDict):
         from OpenGL import GL
-        self._glMajorVersion = int(GL.glGetString(GL.GL_VERSION)[0])
 
         self.program   = GL.glCreateProgram()
-        vertexShader   = GL.glCreateShader(GL.GL_VERTEX_SHADER)
-        fragmentShader = GL.glCreateShader(GL.GL_FRAGMENT_SHADER)
+        vertexShader   = GLSLShader(GL.GL_VERTEX_SHADER)
+        fragmentShader = GLSLShader(GL.GL_FRAGMENT_SHADER)
 
-        if (self._glMajorVersion >= 3):
+        if (kGLMajorVersion >= 3):
             vsSource = VS3
             fsSource = FS3
         else:
             vsSource = VS2
             fsSource = FS2
 
-        GL.glShaderSource(vertexShader, vsSource)
-        GL.glCompileShader(vertexShader)
-        GL.glShaderSource(fragmentShader, fsSource)
-        GL.glCompileShader(fragmentShader)
-        GL.glAttachShader(self.program, vertexShader)
-        GL.glAttachShader(self.program, fragmentShader)
+        vertexShader.attach(vsSource, self.program)
+        fragmentShader.attach(fsSource, self.program)
+
         GL.glLinkProgram(self.program)
 
         if GL.glGetProgramiv(self.program, GL.GL_LINK_STATUS) == GL.GL_FALSE:
-            print GL.glGetShaderInfoLog(vertexShader)
-            print GL.glGetShaderInfoLog(fragmentShader)
+            print GL.glGetShaderInfoLog(vertexShader.shader)
+            print GL.glGetShaderInfoLog(fragmentShader.shader)
             print GL.glGetProgramInfoLog(self.program)
-            GL.glDeleteShader(vertexShader)
-            GL.glDeleteShader(fragmentShader)
             GL.glDeleteProgram(self.program)
-            self.program = 0
-
-        GL.glDeleteShader(vertexShader)
-        GL.glDeleteShader(fragmentShader)
+            self.program = None
 
         self.uniformLocations = {}
         for param in uniformDict:
@@ -123,6 +131,12 @@ class GLSLProgram():
     def uniform4f(self, param, x, y, z, w):
         from OpenGL import GL
         GL.glUniform4f(self.uniformLocations[param], x, y, z, w)
+
+    def __del__(self):
+        prog = getattr(self, 'program', None)
+        if prog != None:
+            from OpenGL import GL
+            GL.glDeleteProgram(prog)
 
 class Rect():
     def __init__(self):
@@ -216,13 +230,13 @@ class OutlineRect(Rect):
 
         self._glslProgram = GLSLProgram(
             # for OpenGL 3.1 or later
-            """#version 140
+            """#version 150
                uniform vec4 rect;
                in vec2 st;
                void main() {
                  gl_Position = vec4(rect.x + rect.z*st.x,
                                     rect.y + rect.w*st.y, 0, 1); }""",
-            """#version 140
+            """#version 150
                out vec4 fragColor;
                uniform vec4 color;
               void main() { fragColor = color; }""",
@@ -251,11 +265,11 @@ class OutlineRect(Rect):
 
         GL.glUseProgram(program.program)
 
-        if (program._glMajorVersion >= 4):
+        if (kGLMajorVersion >= 4):
             GL.glDisable(GL.GL_SAMPLE_ALPHA_TO_COVERAGE)
 
         # requires PyOpenGL 3.0.2 or later for glGenVertexArrays.
-        if (program._glMajorVersion >= 3 and hasattr(GL, 'glGenVertexArrays')):
+        if kGLGenVertex:
             if (cls._vao == 0):
                 cls._vao = GL.glGenVertexArrays(1)
             GL.glBindVertexArray(cls._vao)
@@ -293,13 +307,13 @@ class FilledRect(Rect):
 
         self._glslProgram = GLSLProgram(
             # for OpenGL 3.1 or later
-            """#version 140
+            """#version 150
                uniform vec4 rect;
                in vec2 st;
                void main() {
                  gl_Position = vec4(rect.x + rect.z*st.x,
                                     rect.y + rect.w*st.y, 0, 1); }""",
-            """#version 140
+            """#version 150
                out vec4 fragColor;
                uniform vec4 color;
               void main() { fragColor = color; }""",
@@ -332,11 +346,11 @@ class FilledRect(Rect):
 
         GL.glUseProgram(program.program)
 
-        if (program._glMajorVersion >= 4):
+        if (kGLMajorVersion >= 4):
             GL.glDisable(GL.GL_SAMPLE_ALPHA_TO_COVERAGE)
 
         # requires PyOpenGL 3.0.2 or later for glGenVertexArrays.
-        if (program._glMajorVersion >= 3 and hasattr(GL, 'glGenVertexArrays')):
+        if kGLGenVertex:
             if (cls._vao == 0):
                 cls._vao = GL.glGenVertexArrays(1)
             GL.glBindVertexArray(cls._vao)
@@ -474,7 +488,6 @@ class HUD():
         self._HUDFont = QtGui.QFont("Menv Mono Numeric", 9*self._pixelRatio)
         self._groups = {}
         self._glslProgram = None
-        self._glMajorVersion = 0
         self._vao = 0
 
     def compileProgram(self):
@@ -491,7 +504,7 @@ class HUD():
 
         self._glslProgram = GLSLProgram(
             # for OpenGL 3.1 or later
-            """#version 140
+            """#version 150
                uniform vec4 rect;
                in vec2 st;
                out vec2 uv;
@@ -499,7 +512,7 @@ class HUD():
                  gl_Position = vec4(rect.x + rect.z*st.x,
                                     rect.y + rect.w*st.y, 0, 1);
                  uv          = vec2(st.x, 1 - st.y); }""",
-            """#version 140
+            """#version 150
                in vec2 uv;
                out vec4 color;
                uniform sampler2D tex;
@@ -579,11 +592,11 @@ class HUD():
         width = float(qglwidget.width())
         height = float(qglwidget.height())
 
-        if (self._glslProgram._glMajorVersion >= 4):
+        if (kGLMajorVersion >= 4):
             GL.glDisable(GL.GL_SAMPLE_ALPHA_TO_COVERAGE)
 
         # requires PyOpenGL 3.0.2 or later for glGenVertexArrays.
-        if (self._glslProgram._glMajorVersion >= 3 and hasattr(GL, 'glGenVertexArrays')):
+        if kGLGenVertex:
             if (self._vao == 0):
                 self._vao = GL.glGenVertexArrays(1)
             GL.glBindVertexArray(self._vao)
@@ -811,8 +824,17 @@ class StageView(QtOpenGL.QGLWidget):
         if msaa == "1":
             glFormat.setSampleBuffers(True)
             glFormat.setSamples(4)
-        # XXX: for OSX (QT5 required)
-        # glFormat.setProfile(QtOpenGL.QGLFormat.CoreProfile)
+
+        # Qt 4.8 required for OpenGL 3/4 but still not 4.3!
+        if sys.platform == 'darwin':
+            self._appleGL4 = True
+            qtVers = QtCore.qVersion()
+            glFormat.setProfile(QtOpenGL.QGLFormat.CoreProfile)
+            glVers = (4, 1) if qtVers[0] >= 5 else (3, 3)
+            glFormat.setVersion(*glVers)
+        else:
+            self._appleGL4 = False
+
         super(StageView, self).__init__(glFormat, parent)
 
         self._dataModel = dataModel or StageView.DefaultDataModel()
@@ -1023,11 +1045,11 @@ class StageView(QtOpenGL.QGLWidget):
     def GetSimpleGLSLProgram(self):
         if self._simpleGLSLProgram == None:
             self._simpleGLSLProgram = GLSLProgram(
-            """#version 140
+            """#version 150
                uniform mat4 mvpMatrix;
                in vec3 position;
                void main() { gl_Position = vec4(position, 1)*mvpMatrix; }""",
-            """#version 140
+            """#version 150
                out vec4 outColor;
                uniform vec4 color;
                void main() { outColor = color; }""",
@@ -1051,7 +1073,7 @@ class StageView(QtOpenGL.QGLWidget):
             return
 
         # vao
-        if (glslProgram._glMajorVersion >= 3 and hasattr(GL, 'glGenVertexArrays')):
+        if kGLGenVertex:
             if (self._vao == 0):
                 self._vao = GL.glGenVertexArrays(1)
             GL.glBindVertexArray(self._vao)
@@ -1361,12 +1383,12 @@ class StageView(QtOpenGL.QGLWidget):
         self._renderParams.gammaCorrectColors = False
         self._renderParams.enableIdRender = self._dataModel.viewSettings.displayPrimId
         self._renderParams.enableSampleAlphaToCoverage = not self._dataModel.viewSettings.displayPrimId
-        self._renderParams.highlight = renderSelHighlights
+        self._renderParams.highlight = renderSelHighlights if not self._appleGL4 else False
         self._renderParams.enableSceneMaterials = self._dataModel.viewSettings.enableSceneMaterials
         self._renderParams.colorCorrectionMode = self._dataModel.viewSettings.colorCorrectionMode
         self._renderParams.clearColor = Gf.ConvertDisplayToLinear(Gf.Vec4f(self._dataModel.viewSettings.clearColor))
-        self._renderParams.renderResolution[0] = self.width()
-        self._renderParams.renderResolution[1] = self.height()
+        self._renderParams.renderResolution = self.computeWindowSize()
+
 
         pseudoRoot = self._dataModel.stage.GetPseudoRoot()
 
@@ -1384,6 +1406,13 @@ class StageView(QtOpenGL.QGLWidget):
             renderer = None
         self._forceRefresh = False
 
+        from OpenGL import GL
+        err = GL.glGetError()
+        while err != GL.GL_NO_ERROR:
+            from OpenGL.GLU import gluErrorString
+            print 'OpenGL error: ', gluErrorString(err)
+            err = GL.glGetError()
+
 
     def initializeGL(self):
         if not self.isValid():
@@ -1392,6 +1421,14 @@ class StageView(QtOpenGL.QGLWidget):
         if not Glf.GlewInit():
             return
         Glf.RegisterDefaultDebugOutputMessageCallback()
+        from OpenGL import GL
+        self._glRenderVersion = GL.glGetString(GL.GL_VERSION)
+        self._glShaderVersion = GL.glGetString(GL.GL_SHADING_LANGUAGE_VERSION)
+        print '%s\nShader Model: %s' % (self._glRenderVersion, self._glShaderVersion)
+        global kGLMajorVersion, kGLShaderVersion, kGLGenVertex
+        kGLMajorVersion = int(self._glRenderVersion[0])
+        kGLShaderVersion = int(self._glShaderVersion[0])
+        kGLGenVertex = kGLMajorVersion >= 3 and hasattr(GL, 'glGenVertexArrays')
 
     def updateGL(self):
         """We override this virtual so that we can make it a no-op during
@@ -1534,7 +1571,7 @@ class StageView(QtOpenGL.QGLWidget):
         if (glslProgram.program == 0):
             return
         # vao
-        if (glslProgram._glMajorVersion >= 3 and hasattr(GL, 'glGenVertexArrays')):
+        if kGLGenVertex:
             if (self._vao == 0):
                 self._vao = GL.glGenVertexArrays(1)
             GL.glBindVertexArray(self._vao)
@@ -1560,8 +1597,10 @@ class StageView(QtOpenGL.QGLWidget):
         GL.glEnableVertexAttribArray(0)
         GL.glVertexAttribPointer(0, 3, GL.GL_FLOAT, False, 0, ctypes.c_void_p(0))
 
-        GL.glEnable(GL.GL_LINE_STIPPLE)
-        GL.glLineStipple(2,0xAAAA)
+        # Fixed pipeline is deprecated and unavailable on OS X
+        if not self._appleGL4:
+          GL.glEnable(GL.GL_LINE_STIPPLE)
+          GL.glLineStipple(2,0xAAAA)
 
         GL.glUseProgram(glslProgram.program)
         matrix = (ctypes.c_float*16).from_buffer_copy(mvpMatrix)
@@ -1576,7 +1615,8 @@ class StageView(QtOpenGL.QGLWidget):
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
         GL.glUseProgram(0)
 
-        GL.glDisable(GL.GL_LINE_STIPPLE)
+        if not self._appleGL4:
+          GL.glDisable(GL.GL_LINE_STIPPLE)
         if (self._vao != 0):
             GL.glBindVertexArray(0)
 
@@ -1602,6 +1642,15 @@ class StageView(QtOpenGL.QGLWidget):
             if not UsdImagingGL.Engine.IsColorCorrectionCapable():
                 from OpenGL.GL.EXT.framebuffer_sRGB import GL_FRAMEBUFFER_SRGB_EXT
                 GL.glEnable(GL_FRAMEBUFFER_SRGB_EXT)
+
+            # Not really sure if this is OS X only, but first 3 calls to
+            # paintGL will fail with GL_FRAMEBUFFER_UNDEFINED.
+            # Just print a tidy warning and hope it goes away!
+            if (self._appleGL4 and
+                GL.glCheckFramebufferStatus(GL.GL_DRAW_FRAMEBUFFER)
+                != GL.GL_FRAMEBUFFER_COMPLETE):
+                print "Framebuffer status: ", GL.glCheckFramebufferStatus(GL.GL_DRAW_FRAMEBUFFER), GL.GL_FRAMEBUFFER_UNDEFINED
+                return
 
             self._renderParams.clearColor = Gf.ConvertDisplayToLinear(Gf.Vec4f(self._dataModel.viewSettings.clearColor))
             GL.glClearColor(*self._renderParams.clearColor)

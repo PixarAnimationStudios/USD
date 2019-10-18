@@ -1646,7 +1646,7 @@ HdSt_CodeGen::_GenerateDrawingCoord()
            << "  dc.fvarCoord               = drawingCoord1.x; \n"
            << "  dc.shaderCoord             = drawingCoord1.z; \n"
            << "  dc.vertexCoord             = drawingCoord1.w; \n"
-           << "  dc.topologyVisibilityCoord = drawingCoord2.x; \n"
+           << "  dc.topologyVisibilityCoord = drawingCoord2; \n"
            << "  dc.instanceIndex           = GetInstanceIndex().indices;\n";
 
     if (_metaData.drawingCoordIBinding.binding.IsValid()) {

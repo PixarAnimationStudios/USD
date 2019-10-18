@@ -22,6 +22,7 @@
 // language governing permissions and limitations under the Apache License.
 //
 #include "pxr/imaging/glf/glew.h"
+#include "pxr/imaging/glf/contextCaps.h"
 
 #include "pxr/imaging/hdx/package.h"
 #include "pxr/imaging/hdx/oitRenderTask.h"
@@ -134,8 +135,11 @@ HdxOitRenderTask::Execute(HdTaskContext* ctx)
     //     start to render squares (driver bug?).
     //     For now we always enable GL_POINT_SMOOTH. 
     // XXX Switch points rendering to emit quad with FS that draws circle.
-    bool oldPointSmooth = glIsEnabled(GL_POINT_SMOOTH);
-    glEnable(GL_POINT_SMOOTH);
+    bool disablePointSmooth = false;
+    if (!GlfContextCaps::GetInstance().coreProfile && !glIsEnabled(GL_POINT_SMOOTH)) {
+        glEnable(GL_POINT_SMOOTH);
+        disablePointSmooth = true;
+    }
 
     // XXX HdxRenderTask::Prepare calls HdStRenderPassState::Prepare.
     // This sets the cullStyle for the render pass shader.
@@ -171,7 +175,7 @@ HdxOitRenderTask::Execute(HdTaskContext* ctx)
         glEnable(GL_MULTISAMPLE);
     }
 
-    if (!oldPointSmooth) {
+    if (disablePointSmooth) {
         glDisable(GL_POINT_SMOOTH);
     }
 }

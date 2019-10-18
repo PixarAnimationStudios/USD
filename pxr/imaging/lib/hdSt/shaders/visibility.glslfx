@@ -40,7 +40,7 @@ void GetBitmaskBufferIndices(int id, out int arrayIndex, out int bitIndex)
 
 bool IsBitSet(uint bitmask, int bitIndex)
 {
-    return bool(bitmask & (1 << bitIndex));
+    return bool(bitmask & (1U << bitIndex));
 }
 
 bool IsElementVisible()

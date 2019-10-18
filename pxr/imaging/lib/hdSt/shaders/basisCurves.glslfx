@@ -759,7 +759,7 @@ void main(void)
     color.rgb = HdGet_displayColor().rgb;
 #endif
 #ifdef HD_HAS_displayOpacity
-    color.a = HdGet_displayOpacity().r;
+    color.a = HdGet_displayOpacity();
 #endif
 
     vec3 Peye = inData.Peye.xyz / inData.Peye.w;
@@ -801,7 +801,7 @@ void main(void)
     color.rgb = HdGet_displayColor().rgb;
 #endif
 #ifdef HD_HAS_displayOpacity
-    color.a = HdGet_displayOpacity().r;
+    color.a = HdGet_displayOpacity();
 #endif
     color.rgb = ApplyColorOverrides(color).rgb;
 
