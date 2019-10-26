@@ -572,7 +572,7 @@ VtStreamOut(vector<VtValue> const &val, std::ostream &stream) {
 }    
 
 #define _VT_IMPLEMENT_ZERO_VALUE_FACTORY(r, unused, elem)                \
-template <>                                                              \
+template <> VT_API                                                       \
 Vt_DefaultValueHolder Vt_DefaultValueFactory<VT_TYPE(elem)>::Invoke()    \
 {                                                                        \
     return Vt_DefaultValueHolder::Create(VtZero<VT_TYPE(elem)>());       \

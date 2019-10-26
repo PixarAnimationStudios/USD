@@ -1207,8 +1207,7 @@ struct Vt_ValueShapeDataAccess {
 // the factory for these types. 
 //
 #define _VT_DECLARE_ZERO_VALUE_FACTORY(r, unused, elem)                 \
-template <>                                                             \
-VT_API Vt_DefaultValueHolder Vt_DefaultValueFactory<VT_TYPE(elem)>::Invoke();
+VT_API_TEMPLATE_STRUCT(Vt_DefaultValueFactory<VT_TYPE(elem)>);
 
 BOOST_PP_SEQ_FOR_EACH(_VT_DECLARE_ZERO_VALUE_FACTORY,
                       unused,
