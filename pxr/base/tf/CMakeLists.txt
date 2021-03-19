@@ -17,7 +17,7 @@ pxr_library(tf
         ${TBB_tbb_LIBRARY}
 
     INCLUDE_DIRS
-        ${PYTHON_INCLUDE_DIR}
+        ${PYTHON_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS}
         ${TBB_INCLUDE_DIRS}
 

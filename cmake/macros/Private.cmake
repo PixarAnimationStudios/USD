@@ -81,9 +81,13 @@ endfunction() # _copy_headers
 # our naming conventions, e.g. Tf
 function(_get_python_module_name LIBRARY_FILENAME MODULE_NAME)
     # Library names are either something like tf.so for shared libraries
-    # or _tf.so for Python module libraries. We want to strip the leading
-    # "_" off.
-    string(REPLACE "_" "" LIBNAME ${LIBRARY_FILENAME})
+    # or _tf.pyd/_tf_d.pyd for Python module libraries.
+    # We want to strip off the leading "_" and the trailing "_d".
+    set(LIBNAME ${LIBRARY_FILENAME})
+    if (PXR_DEFINE_BOOST_DEBUG_PYTHON_FLAG)
+        string(REGEX REPLACE "_d$" "" LIBNAME ${LIBNAME})
+    endif()
+    string(REGEX REPLACE "^_" "" LIBNAME ${LIBNAME})
     string(SUBSTRING ${LIBNAME} 0 1 LIBNAME_FL)
     string(TOUPPER ${LIBNAME_FL} LIBNAME_FL)
     string(SUBSTRING ${LIBNAME} 1 -1 LIBNAME_SUFFIX)
@@ -605,14 +609,11 @@ function(_pxr_install_rpath rpathRef NAME)
     # Canonicalize and uniquify paths.
     set(final "")
     foreach(path ${rpath})
-        # Absolutize on Mac.  SIP disallows relative rpaths.
+        # Replace $ORIGIN with @loader_path
         if(APPLE)
             if("${path}/" MATCHES "^[$]ORIGIN/")
                 # Replace with origin path.
-                string(REPLACE "$ORIGIN/" "${origin}/" path "${path}/")
-
-                # Simplify.
-                get_filename_component(path "${path}" REALPATH)
+                string(REPLACE "$ORIGIN/" "@loader_path/" path "${path}/")
             endif()
         endif()
 
@@ -892,7 +893,12 @@ function(_pxr_python_module NAME)
         return()
     endif()
 
-    set(LIBRARY_NAME "_${NAME}")
+    if (WIN32 AND PXR_DEFINE_BOOST_DEBUG_PYTHON_FLAG)
+        # On Windows when compiling with debug python the library must be named with _d.
+        set(LIBRARY_NAME "_${NAME}_d")
+    else()
+        set(LIBRARY_NAME "_${NAME}")
+    endif()
 
     # Install .py files.
     if(args_PYTHON_FILES)
@@ -1026,7 +1032,7 @@ function(_pxr_python_module NAME)
     target_include_directories(${LIBRARY_NAME}
         SYSTEM
         PUBLIC
-            ${PYTHON_INCLUDE_DIR}
+            ${PYTHON_INCLUDE_DIRS}
     )
 
     install(
