@@ -72,7 +72,8 @@ public:
     virtual HdBufferSpecVector GetBufferSpecs(
         HdBufferArraySharedPtr const &bufferArray) const = 0;
 
-    /// Returns the accumulated GPU resource allocation      /// for items in the BufferArray passed as parameter
+    /// Returns the accumulated GPU resource allocation
+    /// for items in the BufferArray passed as parameter
     virtual size_t GetResourceAllocation(
         HdBufferArraySharedPtr const &bufferArray, 
         VtDictionary &result) const = 0;

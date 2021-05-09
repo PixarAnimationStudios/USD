@@ -71,6 +71,10 @@ if(PXR_ENABLE_PYTHON_SUPPORT)
         find_package(PythonLibs 2.7 REQUIRED)
     endif()
 
+    if(WIN32 AND PXR_DEFINE_BOOST_DEBUG_PYTHON_FLAG)
+        set(Boost_USE_DEBUG_PYTHON ON)
+    endif()
+
     # This option indicates that we don't want to explicitly link to the python
     # libraries. See BUILDING.md for details.
     if(PXR_PY_UNDEFINED_DYNAMIC_LOOKUP AND NOT WIN32 )

@@ -46,6 +46,7 @@ option(PXR_ENABLE_OSL_SUPPORT "Enable OSL (OpenShadingLanguage) based components
 option(PXR_ENABLE_PTEX_SUPPORT "Enable Ptex support" ON)
 option(PXR_ENABLE_OPENVDB_SUPPORT "Enable OpenVDB support" OFF)
 option(PXR_ENABLE_NAMESPACES "Enable C++ namespaces." ON)
+option(PXR_DEFINE_BOOST_DEBUG_PYTHON_FLAG "Define BOOST_DEBUG_PYTHON flag." OFF)
 option(PXR_PREFER_SAFETY_OVER_SPEED
        "Enable certain checks designed to avoid crashes or out-of-bounds memory reads with malformed input files.  These checks may negatively impact performance."
         ON)
