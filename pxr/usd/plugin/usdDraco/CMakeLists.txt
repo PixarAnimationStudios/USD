@@ -22,11 +22,14 @@ pxr_plugin(${PXR_PACKAGE}
 
     CPPFILES
         attributeDescriptor.cpp
-	attributeFactory.cpp
+	    attributeFactory.cpp
         exportTranslator.cpp
         fileFormat.cpp
         importTranslator.cpp
         writer.cpp
+
+    PRIVATE_HEADERS
+        api.h
 
     PYTHON_CPPFILES
         moduleDeps.cpp
@@ -48,4 +51,3 @@ pxr_plugin(${PXR_PACKAGE}
 if(USD_DRACO_SET_WINDOWS_EXPORT)
   unset(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS)
 endif()
-
