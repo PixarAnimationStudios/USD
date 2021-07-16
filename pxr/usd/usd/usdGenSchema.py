@@ -762,7 +762,8 @@ def _WriteFile(filePath, content, validate):
     content = (content + '\n'
                if content and not content.endswith('\n') else content)
     if os.path.exists(filePath):
-        existingContent = open(filePath, 'r').read()
+        with open(filePath, 'r') as fp:
+            existingContent = fp.read()
         if existingContent == content:
             Print('\tunchanged %s' % filePath)
             return
@@ -1090,7 +1091,8 @@ def GeneratePlugInfo(templatePath, codeGenPath, classes, validate, env):
         # read existing plugInfo file, strip comments.
         plugInfoFile = os.path.join(codeGenPath, 'plugInfo.json')
         if os.path.isfile(plugInfoFile):
-            infoLines = open(plugInfoFile).readlines()
+            with open(plugInfoFile, 'r') as fp:
+                infoLines = fp.readlines()
             infoLines = [l for l in infoLines
                          if not l.strip().startswith('#')]
             # parse as json.
