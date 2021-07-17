@@ -1008,6 +1008,8 @@ UsdImagingGLEngine::GetRendererSettingsList() const
             r.type = UsdImagingGLRendererSetting::TYPE_FLOAT;
         } else if (r.defValue.IsHolding<std::string>()) {
             r.type = UsdImagingGLRendererSetting::TYPE_STRING;
+        } else if (r.defValue.IsHolding<TfEnum>()) {
+            r.type = UsdImagingGLRendererSetting::TYPE_STRING;
         } else {
             TF_WARN("Setting '%s' with type '%s' doesn't have a UI"
                     " implementation...",

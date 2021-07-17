@@ -181,6 +181,8 @@ struct Tf_PyEnumWrapper
     std::string GetFullName() const {
         return TfEnum::GetFullName(value);
     }
+    boost::python::list GetAllEnumerators(bool cleanNames = true) const;
+
     friend bool operator ==(Tf_PyEnumWrapper const &self,
                             long other) {
         return self.value.GetValueAsInt() == other;

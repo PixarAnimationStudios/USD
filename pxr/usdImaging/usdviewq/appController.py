@@ -1483,14 +1483,35 @@ class AppController(QtCore.QObject):
         if self._stageView:
             self._stageView.SetRendererSetting(action.key, action.isChecked())
 
+    def _buildRenderMenus(self, setting, widget = None):
+        from functools import partial
+        menu = QtWidgets.QMenu()
+        for eVal in setting.defValue.allEnumerators(True):
+            action = menu.addAction(eVal.displayName)
+            action.setData(eVal)
+            action.triggered.connect(partial(self._rendererChoice, str(setting.key), eVal, widget))
+            # If it's a real menu, make the items checkable.
+            # (otherwise it's a pop-up in the 'More Settings' dialog)
+            if not widget:
+                action.setCheckable(True)
+                action.setChecked(eVal.value == setting.defValue.value)
+        return menu
+
     def _configureRendererSettings(self):
         if self._stageView:
             self._ui.menuRendererSettings.clear()
             self._ui.settingsFlagActions = []
+            self.__menus = {}
 
-            settings = self._stageView.GetRendererSettingsList()
             moreSettings = False
+            settings = self._stageView.GetRendererSettingsList()
             for setting in settings:
+                if isinstance(setting.defValue, Tf.Enum):
+                    menu = self._buildRenderMenus(setting)
+                    self._ui.menuRendererSettings.addMenu(menu).setText(setting.name)
+                    self.__menus[str(setting.key)] = menu
+                    continue
+
                 if setting.type != UsdImagingGL.RendererSettingType.FLAG:
                     moreSettings = True
                     continue
@@ -1515,6 +1536,16 @@ class AppController(QtCore.QObject):
             if hasattr(self._ui, 'settingsMoreDialog'):
                 self._ui.settingsMoreDialog.reject()
 
+    def _rendererChoice(self, key, enumVal, widget = None):
+        if widget:
+            widget.value = enumVal
+            widget.setText(enumVal.displayName)
+            return
+
+        for action in self.__menus[key].actions():
+            action.setChecked(action.data().value == enumVal.value)
+        self._stageView.SetRendererSetting(key, enumVal.value)
+
     def _moreRendererSettings(self):
         # Recreate the settings dialog
         self._ui.settingsMoreDialog = QtWidgets.QDialog(self._mainWindow)
@@ -1532,39 +1563,41 @@ class AppController(QtCore.QObject):
 
         settings = self._stageView.GetRendererSettingsList()
         for setting in settings:
-            if setting.type == UsdImagingGL.RendererSettingType.FLAG:
-                checkBox = QtWidgets.QCheckBox()
-                checkBox.setChecked(self._stageView.GetRendererSetting(setting.key))
-                checkBox.key = str(setting.key)
-                checkBox.defValue = setting.defValue
-                formLayout.addRow(setting.name, checkBox)
-                self._ui.settingsMoreWidgets.append(checkBox)
-            if setting.type == UsdImagingGL.RendererSettingType.INT:
-                spinBox = QtWidgets.QSpinBox()
-                spinBox.setMinimum(-2 ** 31)
-                spinBox.setMaximum(2 ** 31 - 1)
-                spinBox.setValue(self._stageView.GetRendererSetting(setting.key))
-                spinBox.key = str(setting.key)
-                spinBox.defValue = setting.defValue
-                formLayout.addRow(setting.name, spinBox)
-                self._ui.settingsMoreWidgets.append(spinBox)
-            if setting.type == UsdImagingGL.RendererSettingType.FLOAT:
-                spinBox = QtWidgets.QDoubleSpinBox()
-                spinBox.setDecimals(10)
-                spinBox.setMinimum(-2 ** 31)
-                spinBox.setMaximum(2 ** 31 - 1)
-                spinBox.setValue(self._stageView.GetRendererSetting(setting.key))
-                spinBox.key = str(setting.key)
-                spinBox.defValue = setting.defValue
-                formLayout.addRow(setting.name, spinBox)
-                self._ui.settingsMoreWidgets.append(spinBox)
-            if setting.type == UsdImagingGL.RendererSettingType.STRING:
-                lineEdit = QtWidgets.QLineEdit()
-                lineEdit.setText(self._stageView.GetRendererSetting(setting.key))
-                lineEdit.key = str(setting.key)
-                lineEdit.defValue = setting.defValue
-                formLayout.addRow(setting.name, lineEdit)
-                self._ui.settingsMoreWidgets.append(lineEdit)
+            widget = None
+
+            if isinstance(setting.defValue, Tf.Enum):
+                widget = QtWidgets.QPushButton()
+                widget.menu = self._buildRenderMenus(setting, widget)
+                widget.setMenu(widget.menu)
+                widget.setText(setting.defValue.displayName)
+
+            elif setting.type == UsdImagingGL.RendererSettingType.FLAG:
+                widget = QtWidgets.QCheckBox()
+                widget.setChecked(self._stageView.GetRendererSetting(setting.key))
+
+            elif setting.type == UsdImagingGL.RendererSettingType.INT:
+                widget = QtWidgets.QSpinBox()
+                widget.setMinimum(-2 ** 31)
+                widget.setMaximum(2 ** 31 - 1)
+                widget.setValue(self._stageView.GetRendererSetting(setting.key))
+
+            elif setting.type == UsdImagingGL.RendererSettingType.FLOAT:
+                widget = QtWidgets.QDoubleSpinBox()
+                widget.setDecimals(10)
+                widget.setMinimum(-2 ** 31)
+                widget.setMaximum(2 ** 31 - 1)
+                widget.setValue(self._stageView.GetRendererSetting(setting.key))
+
+            elif setting.type == UsdImagingGL.RendererSettingType.STRING:
+                widget = QtWidgets.QLineEdit()
+                widget.setText(self._stageView.GetRendererSetting(setting.key))
+
+            if widget:
+                widget.key = str(setting.key)
+                widget.type = setting.type
+                widget.defValue = setting.defValue
+                formLayout.addRow(setting.name, widget)
+                self._ui.settingsMoreWidgets.append(widget)
 
         # Add buttons
         buttonBox = QtWidgets.QDialogButtonBox(
@@ -1594,6 +1627,8 @@ class AppController(QtCore.QObject):
                 self._stageView.SetRendererSetting(widget.key, widget.value())
             if isinstance(widget, QtWidgets.QLineEdit):
                 self._stageView.SetRendererSetting(widget.key, widget.text())
+            if isinstance(widget, QtWidgets.QPushButton) and getattr(widget, 'value', None):
+                self._rendererChoice(widget.key, widget.value)
 
         for action in self._ui.settingsFlagActions:
             action.setChecked(self._stageView.GetRendererSetting(action.key))

@@ -96,6 +96,27 @@ void Tf_PyEnumAddAttribute(boost::python::scope &s,
     }
 }
 
+boost::python::list
+Tf_PyEnumWrapper::GetAllEnumerators(bool cleanNames) const {
+    boost::python::list valueList;
+    const auto& ti = value.GetType();
+    for (auto name : TfEnum::GetAllNames(value)) {
+        bool foundIt;
+        TfEnum eVal = TfEnum::GetValueFromName(ti, name, &foundIt);
+        if (!foundIt)
+            continue;
+        if (cleanNames)
+            name = Tf_PyCleanEnumName(name);
+
+        // convert value to python.
+        Tf_PyEnumWrapper wrappedValue(std::move(name), eVal);
+        boost::python::object pyVal(wrappedValue);
+        pyVal.attr("_baseName") = std::string();
+        valueList.append(std::move(pyVal));
+    }
+    return valueList;
+}
+
 void
 Tf_PyEnumRegistry::
 RegisterValue(TfEnum const &e, object const &obj)
