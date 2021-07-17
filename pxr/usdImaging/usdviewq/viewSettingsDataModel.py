@@ -57,20 +57,40 @@ DEFAULT_AMBIENT = 0.2
 DEFAULT_SPECULAR = 0.1
 
 
+class AbortSettingChange(Exception):
+    pass
+
+
 def visibleViewSetting(f):
+
     def wrapper(self, *args, **kwargs):
-        f(self, *args, **kwargs)
-        # If f raises an exception, the signal is not emitted.
-        self.signalVisibleSettingChanged.emit()
-        self.signalSettingChanged.emit()
+        try:
+            f(self, *args, **kwargs)
+        except AbortSettingChange:
+            pass # f aborted the setting change, so no signals are emitted.
+        except:
+            raise # f threw some Exception we can't handle, so re-raise it.
+        else:
+            # f was successful; emit signals.
+            self.signalVisibleSettingChanged.emit()
+            self.signalSettingChanged.emit()
+
     return wrapper
 
 
 def invisibleViewSetting(f):
+
     def wrapper(self, *args, **kwargs):
-        f(self, *args, **kwargs)
-        # If f raises an exception, the signal is not emitted.
-        self.signalSettingChanged.emit()
+        try:
+            f(self, *args, **kwargs)
+        except AbortSettingChange:
+            pass # f aborted the setting change, so no signal is emitted.
+        except:
+            raise # f threw some Exception we can't handle, so re-raise it.
+        else:
+            # f was successful; emit signal.
+            self.signalSettingChanged.emit()
+
     return wrapper
 
 
@@ -299,8 +319,15 @@ class ViewSettingsDataModel(QtCore.QObject, StateSource):
 
     @visibleViewSetting
     def _updateFOV(self):
-        if self._freeCamera:
-            self._freeCameraFOV = self.freeCamera.fov
+
+        if not self._freeCamera:
+            raise AbortSettingChange
+
+        newFov = self.freeCamera.fov
+        if newFov == self._freeCameraFOV:
+            raise AbortSettingChange
+
+        self._freeCameraFOV = newFov
 
     @property
     def colorCorrectionMode(self):

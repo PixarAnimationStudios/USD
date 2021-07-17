@@ -804,7 +804,7 @@ class StageView(QtOpenGL.QGLWidget):
         self._overrideNear = value
         self.switchToFreeCamera()
         self._dataModel.viewSettings.freeCamera.overrideNear = value
-        self.updateGL()
+        self.update()
 
     @property
     def overrideFar(self):
@@ -817,7 +817,7 @@ class StageView(QtOpenGL.QGLWidget):
         self._overrideFar = value
         self.switchToFreeCamera()
         self._dataModel.viewSettings.freeCamera.overrideFar = value
-        self.updateGL()
+        self.update()
 
     @property
     def allSceneCameras(self):
@@ -1016,7 +1016,7 @@ class StageView(QtOpenGL.QGLWidget):
         if self._renderer:
             if self._renderer.SetRendererPlugin(plugId):
                 self._handleRendererChanged(plugId)
-                self.updateGL()
+                self.update()
                 return True
             else:
                 return False
@@ -1032,7 +1032,7 @@ class StageView(QtOpenGL.QGLWidget):
         if self._renderer:
             if self._renderer.SetRendererAov(aov):
                 self._rendererAovName = aov
-                self.updateGL()
+                self.update()
                 return True
             else:
                 return False
@@ -1053,7 +1053,7 @@ class StageView(QtOpenGL.QGLWidget):
     def SetRendererSetting(self, name, value):
         if self._renderer:
             self._renderer.SetRendererSetting(name, value)
-            self.updateGL()
+            self.update()
 
     def GetRendererCommands(self):
         if self._renderer:
@@ -1073,7 +1073,7 @@ class StageView(QtOpenGL.QGLWidget):
                 self._renderPauseState = self._renderer.PauseRenderer()
             else:
                 self._renderPauseState = not self._renderer.ResumeRenderer()
-            self.updateGL()
+            self.update()
 
     def IsPauseRendererSupported(self):
         if self._renderer:
@@ -1091,7 +1091,7 @@ class StageView(QtOpenGL.QGLWidget):
                 self._renderStopState = self._renderer.StopRenderer()
             else:
                 self._renderStopState = not self._renderer.RestartRenderer()
-            self.updateGL()
+            self.update()
 
     def IsStopRendererSupported(self):
         if self._renderer:
@@ -1367,7 +1367,7 @@ class StageView(QtOpenGL.QGLWidget):
         if resetCam:
             self.resetCam(frameFit)
 
-        self.updateGL()
+        self.update()
 
     def updateSelection(self):
         try:
@@ -1478,17 +1478,17 @@ class StageView(QtOpenGL.QGLWidget):
         from pxr import Glf
         Glf.RegisterDefaultDebugOutputMessageCallback()
 
-    def updateGL(self):
+    def update(self):
         """We override this virtual so that we can make it a no-op during
         playback.  The client driving playback at a particular rate should
         instead call updateForPlayback() to image the next frame."""
         if not self._dataModel.playing:
-            super(StageView, self).updateGL()
+            super(StageView, self).update()
 
     def updateForPlayback(self):
         """If playing, update the GL canvas.  Otherwise a no-op"""
         if self._dataModel.playing:
-            super(StageView, self).updateGL()
+            super(StageView, self).update()
 
     def getActiveSceneCamera(self):
         cameraPrim = self._dataModel.viewSettings.cameraPrim
@@ -2100,7 +2100,7 @@ class StageView(QtOpenGL.QGLWidget):
 
             self._lastX = x
             self._lastY = y
-            self.updateGL()
+            self.update()
 
             self.signalMouseDrag.emit()
         elif self._cameraMode == "none":
@@ -2115,7 +2115,7 @@ class StageView(QtOpenGL.QGLWidget):
         self.switchToFreeCamera()
         self._dataModel.viewSettings.freeCamera.AdjustDistance(
                 1-max(-0.5,min(0.5,(event.angleDelta().y()/1000.))))
-        self.updateGL()
+        self.update()
 
     def _onAutoComputeClippingChanged(self):
         """If we are currently rendering from a prim camera, switch to the
