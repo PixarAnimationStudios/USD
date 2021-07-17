@@ -2168,7 +2168,14 @@ _PrimReaderContext::_AddProperty(
 
     // Save the time sampling.
     property.sampleTimes = _context.ConvertSampleTimes(sampleTimes);
-    property.timeSampled = (property.sampleTimes.GetSize() > 0);
+
+    // Only add the time samples if some exist on the property, and...
+    bool timeSampled = (property.sampleTimes.GetSize() > 0);
+    // if there is only one time sample, ensure it is non-zero!
+    if (property.sampleTimes.GetSize() == 1 && property.sampleTimes[0] == 0.0) {
+        timeSampled = false;
+    }
+    property.timeSampled = timeSampled;
 
     // Save metadata.  This may change the value of 'timeSampled'
     _GetPropertyMetadata(metadata, &property, isOutOfSchemaProperty);
