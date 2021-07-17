@@ -955,6 +955,8 @@ function(_pxr_python_module NAME)
         PROPERTIES
             PREFIX ""
             FOLDER "${folder}"
+            CXX_VISIBILITY_PRESET hidden
+            VISIBILITY_INLINES_HIDDEN ON
     )
     if(WIN32)
         # Python modules must be suffixed with .pyd on Windows.
