@@ -68,6 +68,7 @@ function(pxr_python_bin BIN_NAME)
     )
     set(multiValueArgs
         DEPENDENCIES
+        LIBRARIES
     )
     cmake_parse_arguments(pb
         ""
@@ -143,6 +144,10 @@ function(pxr_python_bin BIN_NAME)
         DEPENDS ${outputs} ${pb_DEPENDENCIES}
     )
     add_dependencies(python ${BIN_NAME}_script)
+
+    _pxr_target_link_libraries(${BIN_NAME}_script
+        ${pb_LIBRARIES}
+    )
 
     _get_folder("" folder)
     set_target_properties(${BIN_NAME}_script
