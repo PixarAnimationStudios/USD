@@ -24,11 +24,13 @@ include(Packages)
 
 # This has to be defined after Packages is included, because it relies on the
 # discovered path to the python executable.
-set(PXR_PYTHON_SHEBANG "${PYTHON_EXECUTABLE}" 
-    CACHE 
-    STRING
-    "Replacement path for Python #! line."
-)
+if (NOT PXR_PYTHON_SHEBANG)
+    set(PXR_PYTHON_SHEBANG "${PYTHON_EXECUTABLE}"
+        CACHE
+        STRING
+        "Replacement path for Python #! line."
+    )
+endif()
 
 # CXXDefaults will set a variety of variables for the project.
 # Consume them here. This is an effort to keep the most common
@@ -58,6 +60,6 @@ endif()
 
 if (PXR_BUILD_DOCUMENTATION)
     pxr_build_documentation()
-endif()   
+endif()
 
 pxr_toplevel_epilogue()

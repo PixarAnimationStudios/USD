@@ -35,13 +35,18 @@
 from __future__ import print_function
 import sys
 
+
 if len(sys.argv) < 3 or len(sys.argv) > 4:
     print("Usage: %s {shebang-str source.py dest|file output.cmd}" % sys.argv[0])
     sys.exit(1)
 
 if len(sys.argv) == 3:
     with open(sys.argv[2], 'w') as f:
-        print('@python "%%~dp0%s" %%*' % (sys.argv[1], ), file=f)
+        if sys.version_info.major == 3:
+            cmdName = 'python3'
+        else:
+            cmdName = 'python'
+        print('@%s "%%~dp0%s" %%*' % (cmdName, sys.argv[1], ), file=f)
 
 else:
     with open(sys.argv[2], 'r') as s:
