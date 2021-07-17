@@ -1837,7 +1837,7 @@ public:
     /// types.  If \p convert is invalid then this does nothing.
     template <class T>
     void AddProperty(const TfToken& name, const SdfValueTypeName& typeName,
-                     const T& converter);
+                     const T& converter, bool isOutOfSchema = false);
 
     /// Adds a uniform property named \p name of type \p typeName with the
     /// converter \p converter.  \p converter must be a functor object that
@@ -2018,10 +2018,11 @@ void
 _PrimReaderContext::AddProperty(
     const TfToken& name,
     const SdfValueTypeName& typeName,
-    const T& converter)
+    const T& converter,
+    bool isOutOfSchema)
 {
     if (converter(IsValidTag())) {
-        _AddProperty(name, typeName, converter, converter, false).converter=converter;
+        _AddProperty(name, typeName, converter, converter, isOutOfSchema).converter=converter;
     }
 }
 
@@ -3026,6 +3027,47 @@ _ReadMayaColor(_PrimReaderContext* context)
         _CopyAdskColor(context->ExtractSchema("adskDiffuseColor")));
 }
 
+namespace MayaLocatorImport {
+    struct LocatorType {
+        GfVec3d position;
+        GfVec3d scale;
+    };
+    ALEMBIC_ABC_DECLARE_TYPE_TRAITS( LocatorType, kFloat64POD, 6, "", MayaLocatorTPTraits );
+    using MayaLocatorProperty = ITypedScalarProperty<MayaLocatorTPTraits>;
+
+    struct _CopyLocator : _CopyGeneric<MayaLocatorProperty> {
+        _CopyLocator(const AlembicProperty& object_) :
+            _CopyGeneric<MayaLocatorProperty>(object_) { }
+
+        using _CopyGeneric<MayaLocatorProperty>::operator();
+
+        bool operator()(const UsdAbc_AlembicDataAny& dst,
+                        const ISampleSelector& iss) const
+        {
+            static_assert(sizeof(LocatorType) == sizeof(float64_t)*6, "Size mismatch");
+
+            const LocatorType s = object.getValue(iss);
+            return dst.Set(VtArray<GfVec3d>{s.position, s.scale});
+        }
+    };
+}
+
+static
+void
+_ReadLocator(_PrimReaderContext* context)
+{
+    // Check for a locator's float64_t[6] from Maya
+    //
+    AlembicProperty locator = context->Extract(UsdAbcPropertyNames->locator);
+    if (locator.GetHeader()) {
+        context->AddProperty(
+               UsdAbcPropertyNames->locator,
+               SdfValueTypeNames->Double3Array,
+               MayaLocatorImport::_CopyLocator(locator),
+               true);
+    }
+}
+
 static
 void
 _ReadOther(_PrimReaderContext* context)
@@ -3912,6 +3954,7 @@ _ReaderSchemaBuilder::_ReaderSchemaBuilder()
         .AppendReader(_ReadImageable)
         .AppendReader(_ReadArbGeomParams)
         .AppendReader(_ReadUserProperties)
+        .AppendReader(_ReadLocator)
         .AppendReader(_ReadOther)
         ;
     schema.AddType(SubDSchemaInfo::title())
