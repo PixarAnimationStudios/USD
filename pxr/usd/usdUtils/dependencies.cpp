@@ -287,8 +287,16 @@ _FileAnalyzer::_ProcessSublayers()
         std::vector<std::string> newSubLayerPaths;
         newSubLayerPaths.reserve(subLayerPaths.size());
         for (auto &subLayer: subLayerPaths) {
-            newSubLayerPaths.push_back(
-                _ProcessDependency(subLayer, _DepType::Sublayer));
+            std::string newPath =
+                _ProcessDependency(subLayer, _DepType::Sublayer);
+            // Avoid duplicates and skip empty asset paths that may be
+            // returned depending on the remap function.
+            if (!newPath.empty() &&
+                std::find(newSubLayerPaths.begin(),
+                    newSubLayerPaths.end(), newPath) ==
+                    newSubLayerPaths.end()) {
+                newSubLayerPaths.push_back(newPath);
+            }
         }
         _layer->SetSubLayerPaths(newSubLayerPaths);
     } else {
@@ -314,6 +322,11 @@ _FileAnalyzer::_RemapRefOrPayload(const RefOrPayloadType &refOrPayload)
     // incoming payload unmodifed.
     if (remappedPath == refOrPayload.GetAssetPath())
         return refOrPayload;
+
+    // The remapped path is empty. Return no value, so this payload or
+    // reference is removed.
+    if (remappedPath.empty())
+        return boost::none;
 
     // The payload or reference path was remapped, hence construct a new 
     // SdfPayload or SdfReference object with the remapped path.

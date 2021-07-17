@@ -614,6 +614,21 @@ _ModifyCallbackHelper(const typename SdfListOp<T>::ModifyCallback& cb,
     }
 
     if (didModify) {
+        // Make sure the updated itemVector doesn't have multiple copies of
+        // the same entry. If it does, just keep the first occurrence of
+        // each value. This is an n^2 operation, but the item counts here
+        // are very likely small enough that it doesn't matter.
+        std::vector<T> uniqueItems;
+        for (auto it = modifiedVector.begin(); it != modifiedVector.end();) {
+            if (std::find(uniqueItems.begin(), uniqueItems.end(), *it) !=
+                    uniqueItems.end()) {
+                it = modifiedVector.erase(it);
+            }
+            else {
+                uniqueItems.push_back(*it);
+                ++it;
+            }
+        }
         itemVector->swap(modifiedVector);
     }
 
