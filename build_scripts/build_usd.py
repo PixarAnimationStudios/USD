@@ -195,7 +195,13 @@ def GetPythonInfo():
         elif Linux():
             return sysconfig.get_config_var("LDLIBRARY")
         elif MacOS():
-            return "libpython" + pythonVersion + ".dylib"
+            # non-framework builds have the dylib name in INSTSONAME
+            # framework builds have just the path of the framework
+            instsoname = sysconfig.get_config_var("INSTSONAME")
+            if os.path.splitext(instsoname)[1] == ".dylib":
+                return instsoname
+            else:
+                return "libpython" + pythonVersion + ".dylib"
         else:
             raise RuntimeError("Platform not supported")
 
