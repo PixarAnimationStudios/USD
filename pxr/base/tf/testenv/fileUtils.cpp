@@ -234,6 +234,28 @@ TestTfIsFile()
     return true;
 }
 
+#if defined(ARCH_OS_WINDOWS)
+static bool
+TestTfJunction()
+{
+    cout << "Testing Windows junctions" << endl;
+
+    TF_AXIOM(TfMakeDir("junction-target"));
+    TF_AXIOM(system("mklink /j junction junction-target") == 0);
+    TF_AXIOM(TfTouchFile("junction/test-file"));
+    TF_AXIOM(!TfIsLink("junction"));
+    TF_AXIOM(TfIsDir("junction", false));
+    TF_AXIOM(TfIsDir("junction", true));
+    TF_AXIOM(TfIsFile("junction/test-file", false));
+    TF_AXIOM(TfIsFile("junction/test-file", true));
+    TF_AXIOM(TfDeleteFile("junction-target/test-file"));
+    (void)ArchRmDir("junction");
+    (void)ArchRmDir("junction-target");
+
+    return true;
+}
+#endif
+
 static bool
 TestTfIsWritable()
 {
@@ -702,6 +724,9 @@ Test_TfFileUtils()
            TestTfPathExists() &&
            TestTfIsDir() &&
            TestTfIsFile() &&
+#if defined(ARCH_OS_WINDOWS)
+           TestTfJunction() &&
+#endif
            TestTfIsWritable() &&
            TestTfIsDirEmpty() &&
            TestTfSymlink() &&

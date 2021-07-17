@@ -161,8 +161,9 @@ TfIsDir(string const& path, bool resolveSymlinks)
 #if defined (ARCH_OS_WINDOWS)
     // Report not a directory if path is a symlink and resolveSymlinks is
     // false.
+    if (!resolveSymlinks && TfIsLink((path)))
+        return false;
     return Tf_HasAttribute(path, resolveSymlinks,
-                    FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT,
                     FILE_ATTRIBUTE_DIRECTORY);
 #else
     ArchStatType st;
@@ -178,8 +179,10 @@ TfIsFile(string const& path, bool resolveSymlinks)
 {
 #if defined (ARCH_OS_WINDOWS)
     // Report not a file if path is a symlink and resolveSymlinks is false.
+    if (!resolveSymlinks && TfIsLink((path)))
+        return false;
     return Tf_HasAttribute(path, resolveSymlinks,
-                    FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT,
+                    FILE_ATTRIBUTE_DIRECTORY,
                     0);
 #else
     ArchStatType st;
@@ -195,7 +198,8 @@ TfIsLink(string const& path)
 {
 #if defined(ARCH_OS_WINDOWS)
     return Tf_HasAttribute(path, /* resolveSymlinks = */ false,
-                           FILE_ATTRIBUTE_REPARSE_POINT);
+                           FILE_ATTRIBUTE_REPARSE_POINT) &&
+                           !TfReadLink(path).empty();
 #else
     ArchStatType st;
     if (Tf_Stat(path, /* resolveSymlinks */ false, &st)) {
