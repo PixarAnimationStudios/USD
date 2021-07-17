@@ -326,7 +326,7 @@ def RunCMake(context, force, extraArgs = None):
     # Create a directory for out-of-source builds in the build directory
     # using the name of the current working directory.
     srcDir = os.getcwd()
-    instDir = (context.usdInstDir if srcDir == context.usdSrcDir
+    instDir = (context.usdInstDir if context.currentDependency.name == "USD"
                else context.instDir)
     buildDir = os.path.join(context.buildDir, os.path.split(srcDir)[1])
     if force and os.path.isdir(buildDir):
@@ -595,6 +595,12 @@ class Dependency(object):
 
         AllDependencies.append(self)
         AllDependenciesByName.setdefault(name.lower(), self)
+
+    def Install(self, context):
+        context.currentDependency = self
+        self.installer(context, 
+                       buildArgs=context.GetBuildArguments(self),
+                       force=context.ForceBuildDependency(self))
 
     def Exists(self, context):
         return all([os.path.isfile(os.path.join(context.instDir, f))
@@ -1732,6 +1738,8 @@ args = parser.parse_args()
 
 class InstallContext:
     def __init__(self, args):
+        self.currentDependency = None
+
         # Assume the USD source directory is in the parent directory
         self.usdSrcDir = os.path.normpath(
             os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."))
@@ -2152,9 +2160,7 @@ try:
     # Download and install 3rd-party dependencies, followed by USD.
     for dep in dependenciesToBuild + [USD]:
         PrintStatus("Installing {dep}...".format(dep=dep.name))
-        dep.installer(context, 
-                      buildArgs=context.GetBuildArguments(dep),
-                      force=context.ForceBuildDependency(dep))
+        dep.Install(context)
 except Exception as e:
     PrintError(str(e))
     sys.exit(1)
