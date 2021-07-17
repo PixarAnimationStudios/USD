@@ -1,0 +1,90 @@
+on: push
+
+jobs:
+  build:
+    name: Build and Test
+    strategy:
+      matrix:
+        vfx: [2019,2020,2021]
+        include:
+          # GCC-6.3.1 Python 2.7
+          - vfx: 2019
+            PYTHON_VERSION: 2.7
+            USE_PYTHON_3: OFF
+          # GCC-6.3.1 Python 3.7
+          - vfx: 2020
+            PYTHON_VERSION: 3.7
+            USE_PYTHON_3: ON
+          # GCC-9.3.1 Python 3.7
+          - vfx: 2021
+            PYTHON_VERSION: 3.7
+            USE_PYTHON_3: ON
+
+    runs-on: ubuntu-latest
+    container:
+        image: aswf/ci-usd:${{ matrix.vfx }}
+  
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Prepare ccache timestamp
+      id: ccache_cache_keys
+      shell: bash
+      run: |
+        echo "::set-output name=date::`date -u +'%Y-%m-%dT%H:%M:%SZ'`"
+  
+    - name: CCache
+      id: ccache
+      uses: actions/cache@v1
+      with:
+        path: /tmp/ccache
+        key: ${{ runner.os }}-usd-ccache-${{ matrix.vfx }}-${{ steps.ccache_cache_keys.outputs.date }}
+        restore-keys: |
+          ${{ runner.os }}-usd-ccache-${{ matrix.vfx }}-
+
+    - run: |
+        set -ex
+        source activate_ccache.sh
+        export CCACHE_DIR=/tmp/ccache
+        # Create ccache folder if it was not restored by cache task
+        mkdir -p /tmp/ccache
+  
+        mkdir build
+        cd build
+        cmake \
+            -DCMAKE_INSTALL_PREFIX=/usr/local \
+            -DOPENEXR_LOCATION=/usr/local \
+            -DPXR_BUILD_TESTS=ON \
+            -DPXR_BUILD_ALEMBIC_PLUGIN=OFF \
+            -DPXR_ENABLE_PYTHON_SUPPORT=ON \
+            -DPXR_USE_PYTHON_3=${{ matrix.USE_PYTHON_3 }} \
+            -DPYTHON_EXECUTABLE=`which python` \
+            ..
+        make -j4
+        ccache --show-stats
+        sudo make install
+      id: build
+      name: Build
+      shell: bash
+
+    - run:  |
+        set -ex
+        cd build
+
+        tests_that_fail_without_gpu='testusdview.*|testUsdRecord.*|testUsdAppUtilsFrameRecorder'
+
+        # GitHub docker actions run as the root user which breaks some Tf tests, so we use the aswfuser instead
+        chown -R aswfuser:aswfgroup ..
+        runuser -u aswfuser -p -- ctest -VV -E "$tests_that_fail_without_gpu" -T test --output-on-failure
+
+      id: test
+      name: Test
+      shell: bash
+
+    - name: Upload test results
+      uses: actions/upload-artifact@master
+      with:
+        name: ctest-results
+        path: 'build/Testing/'
+      # Use always() to always run this step to publish test results when there are test failures
+      if: always()
