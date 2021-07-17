@@ -465,7 +465,11 @@ public:
     /// Set \p id to one of the HdxColorCorrectionTokens.
     USDIMAGINGGL_API
     void SetColorCorrectionSettings(
-        TfToken const& id);
+        TfToken const& ccType,
+        TfToken const& ocioDisplay = {},
+        TfToken const& ocioView = {},
+        TfToken const& ocioColorSpace = {},
+        TfToken const& ocioLook = {});
 
     /// @}
 

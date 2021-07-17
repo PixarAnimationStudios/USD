@@ -1452,8 +1452,15 @@ class StageView(QtOpenGL.QGLWidget):
         self._renderParams.highlight = renderSelHighlights
         self._renderParams.enableSceneMaterials = self._dataModel.viewSettings.enableSceneMaterials
         self._renderParams.enableSceneLights = self._dataModel.viewSettings.enableSceneLights
-        self._renderParams.colorCorrectionMode = self._dataModel.viewSettings.colorCorrectionMode
         self._renderParams.clearColor = Gf.Vec4f(self._dataModel.viewSettings.clearColor)
+
+        ccMode = self._dataModel.viewSettings.colorCorrectionMode
+        self._renderParams.colorCorrectionMode = ccMode
+        self._renderParams.ocioDisplay, self._renderParams.ocioView, self._renderParams.ocioColorSpace = \
+            (self._dataModel.viewSettings.ocioConfig.display,
+               self._dataModel.viewSettings.ocioConfig.view,
+               self._dataModel.viewSettings.ocioConfig.colorSpace) if ccMode == ColorCorrectionModes.OPENCOLORIO else \
+            ('','','')
 
         pseudoRoot = self._dataModel.stage.GetPseudoRoot()
 

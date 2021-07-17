@@ -100,7 +100,12 @@ public:
     bool enableUsdDrawModes;
     GfVec4f clearColor;
     TfToken colorCorrectionMode;
+    // Optional OCIO color setings, only valid when colorCorrectionMode==HdxColorCorrectionTokens->openColorIO
     int lut3dSizeOCIO;
+    TfToken ocioDisplay;
+    TfToken ocioView;
+    TfToken ocioColorSpace;
+    TfToken ocioLook;
 
     inline UsdImagingGLRenderParams();
 
@@ -168,6 +173,10 @@ UsdImagingGLRenderParams::operator==(const UsdImagingGLRenderParams &other)
         && enableUsdDrawModes          == other.enableUsdDrawModes
         && clearColor                  == other.clearColor
         && colorCorrectionMode         == other.colorCorrectionMode
+        && ocioDisplay                 == other.ocioDisplay
+        && ocioView                    == other.ocioView
+        && ocioColorSpace              == other.ocioColorSpace
+        && ocioLook                    == other.ocioLook
         && lut3dSizeOCIO               == other.lut3dSizeOCIO;
 }
 

@@ -73,6 +73,25 @@ def invisibleViewSetting(f):
         self.signalSettingChanged.emit()
     return wrapper
 
+"""Class to hold OCIO display, view, and colorSpace settings.
+The underlying data is somewhat opaque (for view it is strings, but
+for an app-controler it may be the Qt object)
+"""
+class OCIOSettings():
+    def __init__(self, dflt=None):
+        self._display, self._view, self._colorSpace = dflt, dflt, dflt
+
+    @property
+    def display(self):
+        return self._display
+
+    @property
+    def view(self):
+        return self._view
+
+    @property
+    def colorSpace(self):
+        return self._colorSpace
 
 class ViewSettingsDataModel(QtCore.QObject, StateSource):
     """Data model containing settings related to the rendered view of a USD
@@ -110,6 +129,7 @@ class ViewSettingsDataModel(QtCore.QObject, StateSource):
         self._renderMode = self.stateProperty("renderMode", default=RenderModes.SMOOTH_SHADED)
         self._freeCameraFOV = self.stateProperty("freeCameraFOV", default=60.0)
         self._colorCorrectionMode = self.stateProperty("colorCorrectionMode", default=ColorCorrectionModes.SRGB)
+        self._ocioSettings = OCIOSettings('')
         self._pickMode = self.stateProperty("pickMode", default=PickModes.PRIMS)
 
         # We need to store the trinary selHighlightMode state here,
@@ -310,6 +330,23 @@ class ViewSettingsDataModel(QtCore.QObject, StateSource):
     @visibleViewSetting
     def colorCorrectionMode(self, value):
         self._colorCorrectionMode = value
+
+    @property
+    def ocioConfig(self):
+        return self._colorCorrectionMode
+
+    @property
+    def ocioConfig(self):
+        return self._ocioSettings
+
+    def setOCIOConfig(self, colorSpace=None, display=None, view=None):
+        if display:
+            assert view, 'Cannot set a display without a view'
+            self._ocioSettings._display = display
+            self._ocioSettings._view = view
+        if colorSpace:
+            self._ocioSettings._colorSpace = colorSpace
+        self.colorCorrectionMode = ColorCorrectionModes.OPENCOLORIO
 
     @property
     def pickMode(self):

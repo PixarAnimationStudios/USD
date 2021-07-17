@@ -274,7 +274,8 @@ UsdImagingGLEngine::RenderBatch(
 
     _PrepareRender(params);
 
-    SetColorCorrectionSettings(params.colorCorrectionMode);
+    SetColorCorrectionSettings(params.colorCorrectionMode, params.ocioDisplay,
+        params.ocioView, params.ocioColorSpace, params.ocioLook);
 
     // XXX App sets the clear color via 'params' instead of setting up Aovs 
     // that has clearColor in their descriptor. So for now we must pass this
@@ -1185,7 +1186,11 @@ UsdImagingGLEngine::RestartRenderer()
 //----------------------------------------------------------------------------
 void 
 UsdImagingGLEngine::SetColorCorrectionSettings(
-    TfToken const& id)
+    TfToken const& colorCorrectionMode,
+    TfToken const& ocioDisplay,
+    TfToken const& ocioView,
+    TfToken const& ocioColorSpace,
+    TfToken const& ocioLook)
 {
     if (ARCH_UNLIKELY(_legacyImpl)) {
         return;
@@ -1198,7 +1203,11 @@ UsdImagingGLEngine::SetColorCorrectionSettings(
     TF_VERIFY(_taskController);
 
     HdxColorCorrectionTaskParams hdParams;
-    hdParams.colorCorrectionMode = id;
+    hdParams.colorCorrectionMode = colorCorrectionMode;
+    hdParams.displayOCIO = ocioDisplay.GetString();
+    hdParams.viewOCIO = ocioView.GetString();
+    hdParams.colorspaceOCIO = ocioColorSpace.GetString();
+    hdParams.looksOCIO = ocioLook.GetString();
     _taskController->SetColorCorrectionParams(hdParams);
 }
 
