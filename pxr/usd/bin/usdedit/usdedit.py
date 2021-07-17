@@ -30,7 +30,7 @@ import os, sys
 import platform
 isWindows = (platform.system() == 'Windows')
 
-def _findExe(name):
+def __findExe(name):
     from distutils.spawn import find_executable
     cmd = find_executable(name)
     if cmd:
@@ -39,20 +39,30 @@ def _findExe(name):
         cmd = find_executable(name, path=os.path.abspath(os.path.dirname(sys.argv[0])))
         if cmd:
             return cmd
-    
-    if isWindows:
-        # find_executable under Windows only returns *.EXE files
-        # so we need to traverse PATH.
-        for path in os.environ['PATH'].split(os.pathsep):
-            base = os.path.join(path, name)
-            # We need to test for name.cmd first because on Windows, the USD
-            # executables are wrapped due to lack of N*IX style shebang support
-            # on Windows.
-            for ext in ['.cmd', '']:
-                cmd = base + ext
-                if os.access(cmd, os.X_OK):
-                    return cmd
     return None
+
+def __findExe_Win(name):
+    cmd = __findExe(name)
+    if cmd and os.access(cmd + '.cmd', os.X_OK):
+        return cmd + '.cmd'
+
+    # find_executable under Windows only returns *.EXE files
+    # so we need to traverse PATH.
+    for path in os.environ['PATH'].split(os.pathsep):
+        base = os.path.join(path, name)
+        # We need to test for name.cmd first because on Windows, the USD
+        # executables are wrapped due to lack of N*IX style shebang support
+        # on Windows.
+        for ext in ['.cmd', '']:
+            cmd = base + ext
+            if os.access(cmd, os.X_OK):
+                return cmd
+    return None
+
+if isWindows:
+    _findExe = __findExe_Win
+else:
+    _findExe = __findExe
 
 # lookup usdcat and a suitable text editor. if none are available, 
 # this will cause the program to abort with a suitable error message.
