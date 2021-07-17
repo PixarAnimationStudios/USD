@@ -509,6 +509,25 @@ void main()
     MAT4 transform = ApplyInstanceTransform(HdGet_transform());
     vec4 scaledDirection = GetWorldToViewMatrix() * transform 
                   * vec4(direction, 0);
+
+    //
+    // Screen space curve width scaling
+    // if the width falls below one pixel we widen it 
+    // optional minCurveWidth() for user driven controls 
+    //
+    MAT4 projMat = GetProjectionMatrix();
+    vec4 viewport = GetViewport();
+    vec2 screen_size = vec2(viewport.z, viewport.w);
+    float scaleWidth = 2/(projMat[1][1] * screen_size.y);
+    float widthScreen = width/(-position.z * scaleWidth);
+    float widthMultiplier = 1.0;
+#ifdef HD_HAS_minCurveWidth
+    widthMultiplier = min(width, HdGet_minCurveWidth());
+#endif
+
+    if (widthScreen < 1.0)
+        width = position.z * scaleWidth * min(widthMultiplier, 1.0);
+
     vec3 offset = direction * length(scaledDirection.xyz) * width * 0.5;
     position.xyz = position.xyz + offset;
     position.w = 1;
