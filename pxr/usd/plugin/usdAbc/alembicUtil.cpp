@@ -323,6 +323,7 @@ UsdAbc_AlembicConversions::UsdAbc_AlembicConversions()
     // Other conversions.
     data.AddConverter<int,          int8_t>();
     data.AddConverter<int,          int16_t>();
+    data.AddConverter<int,          uint32_t>();
     data.AddConverter<unsigned int, uint16_t>();
     data.AddConverter<TfToken,      std::string>();
     data.AddConverter<GfMatrix4d,   float32_t, 16>();

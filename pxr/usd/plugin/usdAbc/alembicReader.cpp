@@ -68,6 +68,8 @@ TF_DEFINE_PRIVATE_TOKENS(
     _tokens,
     (transform)
     ((xformOpTransform, "xformOp:transform"))
+    ((indicesSuffix, ":indices"))
+    ((valuesSuffix, ":vals"))
 );
 
 TF_DEFINE_ENV_SETTING(
@@ -2094,18 +2096,36 @@ _PrimReaderContext::AddOutOfSchemaProperty(
     // Get the converter and add the property.
     const bool isOutOfSchema = true;
     const UsdAbc_AlembicType alembicType(*header);
-    const SdfValueTypeName usdTypeName =
+    SdfValueTypeName usdTypeName =
         _context.GetSchema().GetConversions().FindConverter(alembicType);
+
     if (usdTypeName) {
-        _PrimReaderContext::Property &prop = 
-            (TfGetEnvSetting(USD_ABC_WRITE_UV_AS_ST_TEXCOORD2FARRAY) && 
-             name == UsdAbcPropertyNames->uvIndices)? 
-                (_AddProperty(UsdAbcPropertyNames->stIndices, 
-                             usdTypeName, header->getMetaData(), 
-                             sampleTimes, isOutOfSchema)) :
-                (_AddProperty(TfToken(name), 
-                             usdTypeName, header->getMetaData(), 
-                             sampleTimes, isOutOfSchema)); 
+        TfToken propName(name);
+        if (TfGetEnvSetting(USD_ABC_WRITE_UV_AS_ST_TEXCOORD2FARRAY) &&
+            name == UsdAbcPropertyNames->uvIndices) {
+            propName = UsdAbcPropertyNames->stIndices;
+        }
+        else if (TfStringEndsWith(name, _tokens->indicesSuffix)){
+            // If the property is indexed and we're adding the indices here
+            // then we want to make sure they are added as an IntArray
+            // as that's the only supported type for index arrays.
+            usdTypeName = SdfValueTypeNames->IntArray;
+        }
+        else if (TfStringEndsWith(name, _tokens->valuesSuffix)) {
+            // If the property is indexed and we're adding the values
+            // it might have a ":vals" suffix. We need to remove it
+            // to be compatible.
+            propName = TfToken(name.substr(0, name.size() - _tokens->valuesSuffix.size()));
+        }
+
+        _PrimReaderContext::Property &prop = _AddProperty(
+            propName,
+            usdTypeName,
+            header->getMetaData(),
+            sampleTimes,
+            isOutOfSchema
+        );
+
         prop.converter = std::bind(
             _context.GetSchema().GetConversions().GetToUsdConverter(
                 alembicType, prop.typeName),

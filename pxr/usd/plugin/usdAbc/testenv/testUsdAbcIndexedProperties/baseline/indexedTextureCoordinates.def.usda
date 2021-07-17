@@ -53,8 +53,8 @@ def Mesh "Cube"
     uchar xform:ops.timeSamples = {
         0: 48,
     }
-    custom matrix4d xform:vals
-    matrix4d xform:vals.timeSamples = {
+    custom matrix4d xform
+    matrix4d xform.timeSamples = {
         0: ( (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1) ),
     }
 }
